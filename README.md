@@ -1,7 +1,7 @@
 APRS Terminal
 =============
 
-A simple Python GUI program to view APRS data from radio via serial port. In my case through Bluetooth.
+A simple Python GUI program to view APRS data from radio via serial port. In my case through Bluetooth. Serial port settings is available in source code. Autoscrolling feature is included to program so latest messages are always visible.
 
 ### Features
 - Graphical user interface for those who not like text only mode.
