@@ -74,12 +74,12 @@ class Mice():
 
         if (((dest[3] >= "0") and (dest[3] <= "9")) or (dest[3] == "L")):
             #South
-            g_lat = -g_lat
+            self.lat = "%.2f%c" % (g_lat,"S")
         elif ((dest[3] >= "P") and (dest[3] <= "Z")):
-            pass #north
+            #north
+            self.lat = "%.2f%c" % (g_lat,"N")
         else:
             raise ValueError("Invalid MIC-E N/S encoding in 4th character of destination")
-        self.lat = g_lat
 
         # Longitude is mostly packed into 3 bytes of message but
         # has a couple bits of information in the destination.
@@ -137,13 +137,13 @@ class Mice():
         # 6th character of destintation indicates east / west
 
         if (((dest[5] >= "0") and (dest[5] <= "9")) or (dest[5] == "L")):
-	        pass # East
+	        # East
+            self.lon = "%.2f%c" % (g_lon,"E")
         elif ((dest[5] >= "P") and (dest[5] <= "Z")):
             # West
-            g_lon = -g_lon
+            self.lon = "%.2f%c" % (g_lon,"W")
         else: 
-	        raise ValueError("Invalid MIC-E E/W encoding in 6th character of destination");	  
-        self.lon = g_lon
+            raise ValueError("Invalid MIC-E E/W encoding in 6th character of destination");	  
 
         # Message type from two 3-bit codes
 
