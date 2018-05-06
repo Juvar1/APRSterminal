@@ -100,7 +100,7 @@ def readSerial(self):
                     self.rtc.BeginTextColour((240,240,0))
                     self.rtc.WriteText("\tMIC-E: ")
                     self.rtc.BeginTextColour((240,240,240))
-                    self.rtc.WriteText("lat: %g, lon: %g, speed: %ikm/h, course: %i, alt: %im, status: %s, info: %s\n" % (decode.lat, decode.lon, decode.speed, decode.crs, decode.alt, decode.status, decode.info))
+                    self.rtc.WriteText("lat: %s, lon: %s, speed: %ikm/h, course: %i, alt: %im, status: %s, info: %s\n" % (decode.lat, decode.lon, decode.speed, decode.crs, decode.alt, decode.status, decode.info))
                 else:
                     self.rtc.BeginTextColour((240,240,0))
                     self.rtc.WriteText("\tInfo: ")
