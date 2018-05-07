@@ -10,10 +10,11 @@ import serial
 import ax25
 import mice
 import time
+import images
 
 # set serial port settings here
 
-PORT = "/dev/rfcomm13"
+PORT = "/dev/rfcomm20"
 BAUD = 115200
 
 class MyFrame(wx.Frame):
@@ -52,7 +53,7 @@ class MyApp(wx.App):
         self.rtc.WriteText("Version 1.0\n")
         self.rtc.BeginAlignment(wx.TEXT_ALIGNMENT_LEFT)
         self.rtc.BeginFontSize(10)
-
+        
         readSerial(self)
         return True
   
@@ -97,11 +98,23 @@ def readSerial(self):
                 self.rtc.WriteText("%s\n" % items)
                 if (data.info[0] == "'" or data.info[0] == "`"):
                     decode = mice.Mice(data.dst,data.info)
+                    getSymbol(self,decode.symbol)
                     self.rtc.BeginTextColour((240,240,0))
                     self.rtc.WriteText("\tMIC-E: ")
                     self.rtc.BeginTextColour((240,240,240))
                     self.rtc.WriteText("lat: %s, lon: %s, speed: %ikm/h, course: %i, alt: %im, status: %s, info: %s\n" % (decode.lat, decode.lon, decode.speed, decode.crs, decode.alt, decode.status, decode.info))
                 else:
+                    # TODO: get format type somehow
+                    if (data.info[0] == "!" and data.info.__len__() > 14):
+                        getSymbol(self,data.info[9:10]+data.info[19:20])
+                    if (data.info[0] == ";"):
+                        pos = data.info.find("*")
+                        getSymbol(self,data.info[pos+16:pos+17]+data.info[pos+26:pos+27])
+                    if (data.info[0] == "}"):
+                        if (data.info.count("*") > 1): extra = 5
+                        else: extra = 0
+                        pos = data.info.rfind("*") + extra
+                        getSymbol(self,data.info[pos+11:pos+12]+data.info[pos+21:pos+22])
                     self.rtc.BeginTextColour((240,240,0))
                     self.rtc.WriteText("\tInfo: ")
                     self.rtc.BeginTextColour((240,240,240))
@@ -110,6 +123,47 @@ def readSerial(self):
                 self.rtc.ShowPosition(self.rtc.GetCaretPosition())
         elif (msg == True):
             aprsResult += value
+
+def getSymbol(self,symb):
+    # process ssid first and exit if no other valid data
+    if (symb[0] == "\\"): #alternate table
+        if (symb[1] >= "!" and symb[1] <= "0"):
+            bmp = images.alternate.GetBitmap().GetSubBitmap(wx.Rect(2+(21*(ord(symb[1])-ord("!"))),1,19,20))
+        elif (symb[1] >= "1" and symb[1] <= "@"):
+            bmp = images.alternate.GetBitmap().GetSubBitmap(wx.Rect(2+(21*(ord(symb[1])-ord("1"))),22,19,20))
+        elif (symb[1] >= "A" and symb[1] <= "P"):
+            bmp = images.alternate.GetBitmap().GetSubBitmap(wx.Rect(2+(21*(ord(symb[1])-ord("A"))),43,19,20))
+        elif (symb[1] >= "Q" and symb[1] <= "`"):
+            bmp = images.alternate.GetBitmap().GetSubBitmap(wx.Rect(2+(21*(ord(symb[1])-ord("Q"))),64,19,20))
+        elif (symb[1] >= "a" and symb[1] <= "p"):
+            bmp = images.alternate.GetBitmap().GetSubBitmap(wx.Rect(2+(21*(ord(symb[1])-ord("a"))),85,19,20))
+        elif (symb[1] >= "q" and symb[1] <= "~"):
+            bmp = images.alternate.GetBitmap().GetSubBitmap(wx.Rect(2+(21*(ord(symb[1])-ord("q"))),106,19,20))
+        else:
+            print("Error in alternate table")
+            return
+    else: #primary table and all alternatives
+        if (symb[1] >= "!" and symb[1] <= "0"):
+            bmp = images.primary.GetBitmap().GetSubBitmap(wx.Rect(2+(21*(ord(symb[1])-ord("!"))),1,19,20))
+        elif (symb[1] >= "1" and symb[1] <= "@"):
+            bmp = images.primary.GetBitmap().GetSubBitmap(wx.Rect(2+(21*(ord(symb[1])-ord("1"))),22,19,20))
+        elif (symb[1] >= "A" and symb[1] <= "P"):
+            bmp = images.primary.GetBitmap().GetSubBitmap(wx.Rect(2+(21*(ord(symb[1])-ord("A"))),43,19,20))
+        elif (symb[1] >= "Q" and symb[1] <= "`"):
+            bmp = images.primary.GetBitmap().GetSubBitmap(wx.Rect(2+(21*(ord(symb[1])-ord("Q"))),64,19,20))
+        elif (symb[1] >= "a" and symb[1] <= "p"):
+            bmp = images.primary.GetBitmap().GetSubBitmap(wx.Rect(2+(21*(ord(symb[1])-ord("a"))),85,19,20))
+        elif (symb[1] >= "q" and symb[1] <= "~"):
+            bmp = images.primary.GetBitmap().GetSubBitmap(wx.Rect(2+(21*(ord(symb[1])-ord("q"))),106,19,20))
+        else:
+            print("Error in primary table")
+            return
+    #else:
+    #    print("Erroneus symbol code")
+    #    return
+    img = bmp.ConvertToImage()
+    #return img
+    self.rtc.WriteImage(img)
 
 app = MyApp(False)
 app.MainLoop()

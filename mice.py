@@ -171,6 +171,9 @@ class Mice():
         else: 
             self.crs = n
 
+        # get symbol codes
+        self.symbol = info[8:9]+info[7:8]
+
         # An optional altitude is next
         # It is three base-91 digits followed by "}"
         
