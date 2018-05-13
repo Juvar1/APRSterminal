@@ -16,7 +16,7 @@ class Ax25():
             self.dst = 0
             self.src = 0
             self.rpt = [0]
-            self.info = 0
+            self.info = ""
 
     def decode_addr(self, data, cursor):
         (a1, a2, a3, a4, a5, a6, a7) = struct.unpack("<BBBBBBB", data[cursor:cursor+7])
