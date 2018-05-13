@@ -9,6 +9,8 @@ A simple Python GUI program to view APRS data from radio via serial port. In my 
 - Decodes ax.25 U frame
 - Decodes MIC-E format
 
+![Screenshot](screenshot/program2.png)
+
 ### Supported and tested Hardware
 - Supports virtually any TNC which supports real or virtual serial port and KISS protocol.
 - Tested with Mobilinkd TNC2 through Bluetooth (with virtual serial port).
