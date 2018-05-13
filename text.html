@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+	
+	<title>text</title>
+
+	<meta charset="utf-8" />
+
+    <style>
+
+    body {
+        padding: 0 10px;
+        margin: 0;
+        background-color: #888888;
+        font-size: 12px;
+    }
+    img {
+        position: absolute;
+        margin: 0 0 0 15px;
+        border:0; 
+        width:19px; 
+        height:20px;
+    }
+    ul {
+        list-style-type: none;
+        margin: 0 0 0 0;
+    }
+    p {
+        color:rgb(240,240,0);
+    }
+    li {
+        color:rgb(240,240,0);
+    }
+    span {
+        color:rgb(240,240,240);
+    }
+
+    </style>
+
+ 	
+</head>
+<body>
+
+
+
+<div id="text"></div>
+<script>
+
+    function addText(str) {
+        //json1 = JSON.parse(str1)
+        // choose symbol table
+        if (str.symb[0] == "\\") {
+            table="alternate.png";
+        } else {
+            table="primary.png";
+        }
+
+        // choose symbol
+        if (str.symb[1] >= "!" && str.symb[1] <= "0") {
+            y = 1;
+            x = 2+(21*(str.symb[1].charCodeAt(0)-"!".charCodeAt(0)));
+        } else if (str.symb[1] >= "1" && str.symb[1] <= "@") {
+            y = 22;
+            x = 2+(21*(str.symb[1].charCodeAt(0)-"1".charCodeAt(0)));
+        } else if (str.symb[1] >= "A" && str.symb[1] <= "P") {
+            y = 43;
+            x = 2+(21*(str.symb[1].charCodeAt(0)-"A".charCodeAt(0)));
+        } else if (str.symb[1] >= "Q" && str.symb[1] <= "`") {
+            y = 64;
+            x = 2+(21*(str.symb[1].charCodeAt(0)-"Q".charCodeAt(0)));
+        } else if (str.symb[1] >= "a" && str.symb[1] <= "p") {
+            y = 85;
+            x = 2+(21*(str.symb[1].charCodeAt(0)-"a".charCodeAt(0)));
+        } else if (str.symb[1] >= "q" && str.symb[1] <= "~") {
+            y = 106;
+            x = 2+(21*(str.symb[1].charCodeAt(0)-"q".charCodeAt(0)));
+        }
+
+        // append data
+        var newNode = document.createElement("p");
+        newNode.innerText = str.time;
+
+        var icon = document.createElement("img");
+        icon.setAttribute("src","blank.png");
+        icon.setAttribute("style","background:url('"+table+"') -"+x+"px -"+y+"px;");
+
+        var list = document.createElement("ul");
+
+        list.appendChild(addItem("Source: ",str.src));
+        list.appendChild(addItem("Destination: ",str.dst));
+        list.appendChild(addItem("Repeaters: ",str.rpt));
+        list.appendChild(addItem(str.info[0]+": ",str.info[1]));
+
+
+        id = Math.floor(Math.random() * 100000);
+        newNode.setAttribute("id", id);
+
+        text = document.getElementById("text");
+        newNode.appendChild(icon);
+        newNode.appendChild(list);
+        text.appendChild(newNode);
+        
+        // auto-scroll-down
+        document.getElementById(id).scrollIntoView();
+    }
+
+    function addItem(header,content) {
+        var item = document.createElement("li");
+        var span = document.createElement("span");
+        item.innerText = header;
+        span.innerText = content;
+        item.appendChild(span);
+        return item
+    }
+
+</script>
+
+
+
+</body>
+</html>
