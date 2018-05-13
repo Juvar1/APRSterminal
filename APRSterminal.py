@@ -29,7 +29,7 @@ import ax25, mice
 
 # set serial port settings here
 
-PORT = "/dev/rfcomm15"
+PORT = "/dev/rfcomm18"
 BAUD = 115200
 
 class Main(QtGui.QMainWindow):
@@ -78,7 +78,7 @@ class Main(QtGui.QMainWindow):
                 if (msg == False):
                     data = ax25.Ax25(aprsResult)
                     self.node = {}
-                    self.node["time"] = currentTime = time.ctime()
+                    self.node["time"] = time.ctime()
                     self.node["src"] = data.src
                     self.node["dst"] = data.dst
                     self.node["rpt"] = data.rpt
@@ -159,8 +159,10 @@ class Main(QtGui.QMainWindow):
                             self.node["lon"] = lon
                             self.node["info"] = ["Position","time: %s, lat: %s lon: %s info: %s" % (self.formatTime(data.info[1:8]),lat,lon,data.info)]
                         elif (data.info[0] == "T"):
+                            self.node["symb"] = "/0"
                             self.node["info"] = ["Telemetry",data.info]
                         else:
+                            self.node["symb"] = "/0"
                             self.node["info"] = ["Unknown format",data.info]
                     self.addText()
                     self.addToMap()

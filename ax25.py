@@ -11,7 +11,12 @@ class Ax25():
         if (frame.__len__() > 0):
             self.decode(frame)
         else:
-            raise ValueError("Empty string")
+            #raise ValueError("Empty string")
+            self.ssid = 0
+            self.dst = 0
+            self.src = 0
+            self.rpt = [0]
+            self.info = 0
 
     def decode_addr(self, data, cursor):
         (a1, a2, a3, a4, a5, a6, a7) = struct.unpack("<BBBBBBB", data[cursor:cursor+7])
@@ -19,9 +24,12 @@ class Ax25():
         ssid = (a7 >> 1) & 0xf     
         ext = a7 & 0x1
 
+        self.ssid = ssid
+
         addr = struct.pack("<BBBBBB", a1 >> 1, a2 >> 1, a3 >> 1, a4 >> 1, a5 >> 1, a6 >> 1)
         if ssid != 0:
             call = "{}-{}".format(addr.strip(), ssid)
+            self.ssid = ssid
         else:
             call = addr
         return (call, hrr, ext)
