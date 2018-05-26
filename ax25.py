@@ -6,17 +6,16 @@
 import struct
 
 class Ax25():
-
+    ssid = 0
+    dst = 0
+    src = 0
+    rpt = [0]
+    info = ""
     def __init__(self, frame):
         if (frame.__len__() > 0):
             self.decode(frame)
         else:
-            #raise ValueError("Empty string")
-            self.ssid = 0
-            self.dst = 0
-            self.src = 0
-            self.rpt = [0]
-            self.info = ""
+            pass
 
     def decode_addr(self, data, cursor):
         (a1, a2, a3, a4, a5, a6, a7) = struct.unpack("<BBBBBBB", data[cursor:cursor+7])
