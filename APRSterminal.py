@@ -1,7 +1,7 @@
 #! /usr/bin/python
 # -*- coding: utf-8 -*-
 
-#    APRS terminal, ver 2.1
+#    APRS terminal, ver 2.2
 
 #    Copyright (C) 2018 Juvar, Juha-Pekka Varjonen, OH1FWW
 
@@ -28,7 +28,7 @@ from PyQt4.QtCore import Qt, QTimer, QThread, SIGNAL
 from datetime import datetime
 
 import bluetooth, serial, re
-import ax25, mice
+import mice, ax25
 
 import serial.tools.list_ports
 
@@ -95,10 +95,9 @@ class Main(QtGui.QMainWindow):
         self.splitter.addWidget(self.html)
         self.splitter.addWidget(self.text)
 
-        # create menubar
-        #menubar = self.menuBar()
-        #self.btMenu = menubar.addMenu("Bluetooth")
-        #self.serialMenu = menubar.addMenu("Serial port")
+        # disable context menus
+        #self.html.setContextMenuPolicy(0)
+        self.text.setContextMenuPolicy(0)
 
         # x and y coordinates on the screen, width, height
         self.setGeometry(100,100,800,600)
@@ -118,18 +117,108 @@ class Main(QtGui.QMainWindow):
         self.tab2 = QtGui.QWidget()
         self.tab_widget.addTab(self.tab1,"Map view")
         self.tab_widget.addTab(self.tab2,"Settings")
+
+        # create send related UI items
+        lb1 = QtGui.QLabel("Destination")
+        lb2 = QtGui.QLabel("ssid")
+        lb3 = QtGui.QLabel("Source")
+        lb4 = QtGui.QLabel("Path")
+        lb5 = QtGui.QLabel("Message type")
+        lb6 = QtGui.QLabel("Symbol")
+        lb7 = QtGui.QLabel("Lat")
+        lb8 = QtGui.QLabel("Lon")
+        #lb9 = QtGui.QLabel("Message")
+        lb10 = QtGui.QLabel("ssid")
+        lb11 = QtGui.QLabel("ssid")
+        lb12 = QtGui.QLabel("Table")
+        self.edit1 = QtGui.QLineEdit()
+        self.edit1.setMaxLength(6)
+        self.edit1.setText("APRS")
+        self.spin1 = QtGui.QSpinBox()
+        self.spin1.setRange(0, 15)
+        self.spin2 = QtGui.QSpinBox()
+        self.spin2.setRange(0, 15)
+        self.spin3 = QtGui.QSpinBox()
+        self.spin3.setRange(0, 15)
+        self.edit2 = QtGui.QLineEdit()
+        self.edit2.setMaxLength(6)
+        self.edit2.setPlaceholderText("Your call sign")
+        self.edit3 = QtGui.QLineEdit()
+        self.edit3.setText("WIDE2")
+        self.edit3.setMaxLength(6)
+        self.cmb1 = QtGui.QComboBox()
+        self.cmb1.addItems(["position","status","message"])
+        self.cmb1.currentIndexChanged.connect(self.changeMsgType)
+        self.edit4 = QtGui.QLineEdit()
+        self.edit4.setMaxLength(1)
+        self.edit4.setMaximumWidth(50)
+        self.edit5 = QtGui.QLineEdit()
+        self.edit5.setMaxLength(8)
+        self.edit5.setPlaceholderText("0000.00X")
+        self.edit6 = QtGui.QLineEdit()
+        self.edit6.setMaxLength(9)
+        self.edit6.setPlaceholderText("00000.00X")
+        self.edit7 = QtGui.QLineEdit()
+        self.edit7.setPlaceholderText("Text message")
+        self.edit8 = QtGui.QLineEdit()
+        self.edit8.setMaxLength(1)
+        self.edit8.setMaximumWidth(50)
+        self.edit9 = QtGui.QLineEdit() # adressee
+        self.edit9.setMaxLength(9)
+        self.edit9.setPlaceholderText("Recp addr")
+        bt1 = QtGui.QPushButton("Send")
+        bt1.clicked.connect(self.sendMsg)
+
+        sendSet = QtGui.QGridLayout()
+        sendSet.addWidget(lb1,0,0)
+        sendSet.addWidget(lb2,0,1)
+        sendSet.addWidget(lb3,0,2)
+        sendSet.addWidget(lb10,0,3)
+        sendSet.addWidget(lb4,0,4)
+        sendSet.addWidget(lb11,0,5)
+        sendSet.addWidget(self.edit1,1,0)
+        sendSet.addWidget(self.spin1,1,1)
+        sendSet.addWidget(self.edit2,1,2)
+        sendSet.addWidget(self.spin2,1,3)
+        sendSet.addWidget(self.edit3,1,4)
+        sendSet.addWidget(self.spin3,1,5)
+        sendSet.addWidget(lb5,2,0)
+        sendSet.addWidget(lb7,2,2)
+        sendSet.addWidget(lb12,2,3)
+        sendSet.addWidget(lb8,2,4)
+        sendSet.addWidget(lb6,2,5)
+        sendSet.addWidget(self.cmb1,3,0)
+        sendSet.addWidget(self.edit5,3,2)
+        sendSet.addWidget(self.edit4,3,3)
+        sendSet.addWidget(self.edit6,3,4)
+        sendSet.addWidget(self.edit8,3,5)
+        
+        sendl = QtGui.QHBoxLayout()
+        sendl.setContentsMargins(0,0,0,0)
+        #sendl.addWidget(lb9,1, Qt.AlignVCenter|Qt.AlignRight)
+        sendl.addWidget(self.edit9,2)
+        sendl.addWidget(self.edit7,10)
+        sendl.addWidget(bt1,1)
+        sendBox = QtGui.QFrame()
+        sendBox.setLayout(sendl)
+
         #insert layout box
         layout = QtGui.QVBoxLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins(0,0,0,0)
         layout.addWidget(self.splitter)
+        layout.addWidget(sendBox)
         self.tab1.setLayout(layout)
         
         # create groupboxes
         groupBox1   = QtGui.QGroupBox("Bluetooth")
         groupBox2   = QtGui.QGroupBox("Serial")
+        groupBox3   = QtGui.QGroupBox("Station info")
+        groupBox3.setLayout(sendSet)
         # create bluetooth groupbox content
         self.radio1 = QtGui.QRadioButton("Use Bluetooth")
         self.radio1.toggled.connect(self.radioChanged)
-        self.button1     = QtGui.QPushButton("Search devices")
+        self.button1= QtGui.QPushButton("Search devices")
         self.button1.clicked.connect(self.btSearch)
         label1      = QtGui.QLabel("Found devices:")
         self.combo1 = QtGui.QComboBox()
@@ -176,7 +265,8 @@ class Main(QtGui.QMainWindow):
         tabLayout = QtGui.QGridLayout()
         tabLayout.addWidget(groupBox1,0,0)
         tabLayout.addWidget(groupBox2,1,0)
-        tabLayout.addWidget(spacer1,2,0,3,0)
+        tabLayout.addWidget(groupBox3,2,0)
+        tabLayout.addWidget(spacer1,3,0)
         self.tab2.setLayout(tabLayout)
 
         # update comboboxes
@@ -185,8 +275,15 @@ class Main(QtGui.QMainWindow):
         self.combo1.setEnabled(False)
         self.button3.setEnabled(False)
 
-        self.msg = False     #XXX
-        self.aprsResult = "" #XXX
+        # initialize send box
+        self.changeMsgType(0)
+
+        # initialize connection status
+        self.BT_CONNECT = False
+        self.SER_CONNECT = False
+
+        self.msg = False
+        self.aprsResult = ""
         self.nodes = {}
 
     def radioChanged(self):
@@ -248,7 +345,7 @@ class Main(QtGui.QMainWindow):
         self.btDevicelist = results
 
     def btDisconnect(self):
-        self.BT_UNCONNECT = True
+        self.BT_CONNECT = False
         #try:
         # terminate thread
         #self.rcvBt.quit()
@@ -289,14 +386,14 @@ class Main(QtGui.QMainWindow):
         self.button3.clicked.disconnect(self.btConnect)
         self.button3.clicked.connect(self.btDisconnect)
 
-        self.BT_UNCONNECT = False
+        self.BT_CONNECT = True
         self.rcvBt = btRead(self.sock)
         self.connect(self.rcvBt, SIGNAL("btReceived"),self.translateData)
         self.connect(self.rcvBt, SIGNAL("finished()"), self.btDone)
         self.rcvBt.start()
 
     def btDone(self):
-        if (not self.BT_UNCONNECT): 
+        if (self.BT_CONNECT): 
             self.rcvBt.start() # restart thread immediately when finished
 
     def btErr(self,err):
@@ -322,7 +419,7 @@ class Main(QtGui.QMainWindow):
             self.button4.setEnabled(True)
 
     def serDisconnect(self):
-        self.SER_UNCONNECT = True
+        self.SER_CONNECT = False
         self.rcvSer.terminate()
         self.ser.close()
         self.button4.setText("Connect")
@@ -350,31 +447,114 @@ class Main(QtGui.QMainWindow):
         self.button2.setEnabled(False)
         self.combo2.setEnabled(False)
         self.combo3.setEnabled(False)        
-        self.SER_UNCONNECT = False
+        self.SER_CONNECT = True
         self.rcvSer = serRead(self.ser)
         self.connect(self.rcvSer, SIGNAL("serialReceived"),self.translateData)
         self.connect(self.rcvSer, SIGNAL("finished()"), self.serDone)
         self.rcvSer.start()
 
     def serDone(self):
-        if (not self.SER_UNCONNECT):
+        if (self.SER_CONNECT):
             self.rcvSer.start() # restart thread immediately when finished        
 
-    def translateData(self,val):
-        #aprsResult = ""
-        #msg = False
+    def changeMsgType(self,index):
+        if(index == 0): # position report
+            self.edit7.setMaxLength(43)
+            self.edit9.setVisible(False)
+        elif(index == 1): # status report
+            self.edit7.setMaxLength(62)
+            self.edit9.setVisible(False)
+        elif(index == 2): # message
+            self.edit7.setMaxLength(67)
+            self.edit9.setVisible(True)
+
+    def encode(self,addr,cbit,ssid,ext):
+        res = []
+        for char in addr.upper().ljust(6):
+            res.append(chr(ord(char)<<1))
+        last = 0b01100000 # reserved bits
+        last += cbit << 7 # H or C bit
+        last += ssid << 1
+        last += ext
+        res.append(chr(last))
+        return "".join(res)
+
+    def sendMsg(self):
+        p1 = re.compile(r"[a-zA-Z0-9]{3,}")
+        destField   = p1.match(self.edit1.text())
+        sourceField = p1.match(self.edit2.text())
+        repField    = p1.match(self.edit3.text())
+
+        # table and symbol match
+        table  = re.match(r".{1}",self.edit4.text())
+        symbol = re.match(r".{1}",self.edit8.text())
+
+        lat = re.match(r"\d{4}\.\d\d[NS]",self.edit5.text())
+        lon = re.match(r"\d{5}\.\d\d[EW]",self.edit6.text())
+
+        index = self.cmb1.currentIndex()
+
+        if ((not destField) \
+            or (not sourceField) \
+            or (not repField) \
+            or (not table and not index) \
+            or (not symbol and not index) \
+            or (not lat and not index) \
+            or (not lon and not index)):
+            reply = QtGui.QMessageBox.information(self,"Missing text","Please fill station information on settings page before sending anything.")
+            return
+
+        destField   = str(self.edit1.text())
+        sourceField = str(self.edit2.text())
+        repField    = str(self.edit3.text())
+
+        test = re.match(r"[\|~]",self.edit7.text())
+        if (test):
+            reply = QtGui.QMessageBox.information(self,"Character not allowed","Message cannot contain '|' or '~' character")
+            return
+        
+        # take text message and fix encode
+        msgText = self.edit7.text().toUtf8().data().decode("utf-8").encode("latin-1")
+        self.edit7.setText("")
+
+        if (len(msgText) == 0): return;
+
+        if (index == 0): # position report
+            table  = str(self.edit4.text())
+            symbol = str(self.edit8.text())
+            lat = str(self.edit5.text())
+            lon = str(self.edit6.text())
+            send = "="+lat+table+lon+symbol+msgText
+        elif (index == 1): # status report
+            send = r">"+ msgText
+        elif (index == 2): # message
+            send = ":"+str(self.edit9.text()).upper().ljust(9)+":"+msgText
+
+        msg  = b"\x00"
+        msg += self.encode(destField,0,self.spin1.value(),0) # destination
+        msg += self.encode(sourceField,0,self.spin2.value(),0) # source
+        msg += self.encode(repField,0,self.spin3.value(),1) # repeaters
+        msg += b"\x03" # U frame
+        msg += b"\xf0"
+        msg += send
+
+        if(self.BT_CONNECT): self.sock.send(b"\xc0" + msg + b"\xc0")
+        if(self.SER_CONNECT): self.ser.write(b"\xc0" + msg + b"\xc0")
+        self.translateData(b"\xc0" + msg + b"\xc0", True)
+
+    def translateData(self,val,own=False):
         for value in val:
-            if (value == "\xc0"): # FEND, frame start/end char (KISS protocol)
+            if (value == b"\xc0"): # FEND, frame start/end char (KISS protocol)
                 self.msg = not self.msg
                 if (self.msg == False):
                     data = ax25.Ax25(self.aprsResult)
-                    
+
                     if (data.info.__len__() == 0):
                         self.msg = True
                         break
-                    
+
                     self.node = {}
-                    self.node["time"] = datetime.now().strftime("%c") #time.ctime()
+                    self.node["time"] = datetime.now().strftime("%d %b, %H:%M")
                     self.node["src"] = data.src
                     self.node["dst"] = data.dst
                     self.node["rpt"] = data.rpt
@@ -388,18 +568,7 @@ class Main(QtGui.QMainWindow):
                         self.node["lon"] = decode.lon.zfill(9)
                         content = "lat: %s, lon: %s, speed: %ikm/h, course: %i, alt: %im, status: %s, info: %s" % (decode.lat.zfill(8), decode.lon.zfill(9), decode.speed, decode.crs, decode.alt, decode.status, decode.info)
                         self.node["info"] = ["Mic-E",content]
-
-                        #! or =, lat=8, table, long=9, code, comment
-                        #! or =, lat=8, table, long=9, code, ext=7, comment
-                        #! or =, lat=8, table, long=9, code, ext=7, data=8, comment
-                        #! or =, table, lat=4, long=4, code, ext=2, type, comment
-                        #/ or @, time=7, table, lat=4, long=4, code, ext=2, type, comment
-                        #/ or @, time=7, lat=8, table, long=9, code, comment
-                        #/ or @, time=7, lat=8, table, long=9, code, ext=7, comment
-                        #/ or @, time=7, lat=8, table, long=9, code, ext=7, data=8, comment
-                        #;, name=9, * ,time=7, lat=8, table, long=9, code, wind=7,...
-                        #;, name=9,*or_,time=7,lat=8, table, long=9, code, ext=7 
-                        #;, name=9,*or_,time=7,comp pos data=13,
+                    #other than Mic-E
                     elif test:
                         self.node["symb"] = test.group(3)+test.group(5)
                         self.node["lat"] = test.group(2)
@@ -412,7 +581,6 @@ class Main(QtGui.QMainWindow):
                             if (key == self.node["src"]):
                                 if ((self.node["lat"] != oldlat) or (self.node["lon"] != oldlon)):
                                     self.node["id"] = self.node["src"] + datetime.now().strftime("%H%M%S%f")
-
                         if (data.info[0] == ";"):
                             if (test.group(5) == "_"):
                                 # weather report format
@@ -443,8 +611,6 @@ class Main(QtGui.QMainWindow):
                             self.node["info"] = ["Position","time: %s, lat: %s, lon: %s, info: %s" % (self.formatTime(data.info[1:8]),test.group(2),test.group(4),data.info)]
                         elif (data.info[0] == r"<"):
                             self.node["info"] = ["Station capabilities",data.info]
-                        elif (data.info[0] == r">"):
-                            self.node["info"] = ["Status","time: %s, info: %s" % (self.formatTime(data.info[1:8]),data.info[8:])]
                         elif (data.info[0] == "?"):
                             self.node["info"] = ["Query",data.info]
                         elif (data.info[0] == "_"):
@@ -455,7 +621,7 @@ class Main(QtGui.QMainWindow):
                             self.node["info"] = ["Third-party format",data.info]
                         else:
                             self.node["info"] = ["Unknown format",data.info]
-                    else: # compressed formats
+                    else: # compressed/other formats
                         self.node["lat"] = "0000.00N"
                         self.node["lon"] = "00000.00E"
                         self.node["id"] = self.node["src"] + datetime.now().strftime("%H%M%S%f")
@@ -477,14 +643,22 @@ class Main(QtGui.QMainWindow):
                             self.node["lat"] = lat
                             self.node["lon"] = lon
                             self.node["info"] = ["Position","time: %s, lat: %s lon: %s info: %s" % (self.formatTime(data.info[1:8]),lat,lon,data.info)]
+                        elif (data.info[0] == r">"): # status report
+                            self.node["symb"] = "/0"
+                            timeFound = re.match(r"\d{6}[z]",data.info)
+                            if(timeFound): self.node["info"] = ["Status","time: %s, status: %s" % (self.formatTime(data.info[1:8]),data.info[8:])]
+                            else: self.node["info"] = ["Status", data.info[1:]]
+                        elif (data.info[0] == ":"): # message
+                            self.node["symb"] = "/0"
+                            self.node["info"] = ["Message", "adressee: %s, message: %s" % (data.info[1:10].rstrip(),data.info[11:])]
                         elif (data.info[0] == "T"):
                             self.node["symb"] = "/0"
                             self.node["info"] = ["Telemetry",data.info]
                         else:
                             self.node["symb"] = "/0"
                             self.node["info"] = ["Unknown format",data.info]
-                    self.addText()
-                    self.addToMap()
+                    #self.addToMap()
+                    self.addText(own)
                     self.aprsResult = ""
             elif (self.msg == True):
                 self.aprsResult += value
@@ -492,18 +666,25 @@ class Main(QtGui.QMainWindow):
     def decodeWeather(self,info):
         gust = re.search(r"g(\d{3})|.$",info).group(1)
         if (gust): gust = str("%i" % (float(gust) * 0.447)) # mph into m/s
+        else: gust=""
         temp = re.search(r"t(\d{3})|.$",info).group(1)
         if (temp): temp = str("%.1f" % ((float(temp) - 32) / 1.8)) # fahrenheit into celsius
+        else: temp=""
         rain1h = re.search(r"r(\d{3})|.$",info).group(1)
         if (rain1h): rain1h = str("%.1f" % (float(rain1h) * 0.254)) # hundredths of an inch into mm
+        else: rain1h=""
         rain24h = re.search(r"p(\d{3})|.$",info).group(1)
         if (rain24h): rain24h = str("%.1f" % (float(rain24h) * 0.254)) # hundredths of an inch into mm
+        else: rain24h=""
         rainsm = re.search(r"P(\d{3})|.$",info).group(1)
         if (rainsm): rainsm = str("%.1f" % (float(rainsm) * 0.254)) # hundredths of an inch into mm
+        else: rainsm=""
         humi = re.search(r"h(\d{2})|.$",info).group(1) # what! this is already usable value...
         if (humi): humi = str("%s" % humi)
+        else: humi=""
         pres = re.search(r"b(\d{5})|.$",info).group(1)
         if (pres): pres = str("%i" % (float(pres) / 10.0)) # tenths of millibar into millibar
+        else: pres=""
         return gust,temp,rain1h,rain24h,rainsm,humi,pres
 
     def ddToGPS(self,dec):
@@ -527,11 +708,14 @@ class Main(QtGui.QMainWindow):
         if(tme[-1] == "/"): return "%s' day %s:%s Local" % (tme[0:2],tme[2:4],tme[4:6])
         if(tme[-1] == "h"): return "%s:%s.%s UTC" % (tme[0:2],tme[2:4],tme[4:6])
 
-    def addText(self):
-        frame = self.text.page().mainFrame()
-        frame.evaluateJavaScript("addText(%s);" % self.node)
+    def addText(self,own=False):
 
-    def addToMap(self):
+        self.node["time"] = self.node["time"].decode("utf-8").encode("latin-1")
+
+        frame = self.text.page().mainFrame()
+        frame.evaluateJavaScript("addText(%s,%d);" % (self.node,own))
+
+    #def addToMap(self):
         # add into JSON list
         #with open("buffer.json", mode='r') as nodesjson:
         #    nodesPython = json.load(nodesjson)
@@ -548,8 +732,8 @@ class Main(QtGui.QMainWindow):
 
         # if older than 0.5 hour then remove
         for key in list(self.nodes.keys()):
-            timestamp = self.nodes[key]["time"]
-            t1 = datetime.strptime(timestamp, "%c")
+            timestamp = self.nodes[key]["time"].decode("unicode-escape").encode("utf-8")
+            t1 = datetime.strptime(timestamp, "%d %b, %H:%M")
             t2 = datetime.now()
             diff = t2 - t1 # take timedelta value
             if (diff.seconds > 1800): #30 minutes

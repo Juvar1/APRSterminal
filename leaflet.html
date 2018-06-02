@@ -66,6 +66,8 @@
         if(str.lat.slice[7] == "S") {newLat= -Math.abs(newLat);}
         if(str.lon.slice[8] == "W") {newLon= -Math.abs(newLon);}
         
+        if((newLat == 0) && (newLon == 0)) return;
+
         // choose symbol table
         if (str.symb[0] == "\\") {
             table="alternate.png";
@@ -102,35 +104,19 @@
             popupAnchor: [0, -10]
         });
 
-        // display new node
+        // make new node
         var node = L.marker([newLat, newLon],{icon: myIcon}); //.addTo(mymap).bindPopup(str.src);
-        //mymap.addLayer(node);
         node.bindPopup(str.src);
 
-        return node;
-        //L.layerGroup(nodelist)
-
         // if first time here, then zoom to first node
-        //if (firstTime) {
-        //    firstTime = false;
-        //    mymap.setZoom(9);
-        //    mymap.panTo(L.latLng(newLat, newLon));
-        //}
+        if (firstTime) {
+            firstTime = false;
+            mymap.setZoom(9);
+            mymap.panTo(L.latLng(newLat, newLon));
+        }
+
+        return node;
     }
-
-
-//	L.marker([51.5, -0.09]).addTo(mymap)
-//		.bindPopup("<b>Hello world!</b><br />I am a popup.").openPopup();
-//	var popup = L.popup();
-
-//	function onMapClick(e) {
-//		popup
-//			.setLatLng(e.latlng)
-//			.setContent("You clicked the map at " + e.latlng.toString())
-//			.openOn(mymap);
-//	}
-
-//	mymap.on('click', onMapClick);
 
 </script>
 

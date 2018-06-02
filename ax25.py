@@ -1,9 +1,3 @@
-# original code from GitHub, mumrah/run.py
-# https://gist.github.com/mumrah/8fe7597edde50855211e27192cce9f88
-# minor bug fix and simplification by
-# Juvar, Juha-Pekka Varjonen, OH1FWW, 2018
-
-import struct
 
 class Ax25():
     ssid = 0
@@ -13,57 +7,53 @@ class Ax25():
     info = ""
     def __init__(self, frame):
         if (frame.__len__() > 0):
-            self.decode(frame)
+            self.decodeAx25(frame)
         else:
             pass
 
-    def decode_addr(self, data, cursor):
-        (a1, a2, a3, a4, a5, a6, a7) = struct.unpack("<BBBBBBB", data[cursor:cursor+7])
-        hrr = a7 >> 5
-        ssid = (a7 >> 1) & 0xf     
-        ext = a7 & 0x1
-
-        self.ssid = ssid
-
-        addr = struct.pack("<BBBBBB", a1 >> 1, a2 >> 1, a3 >> 1, a4 >> 1, a5 >> 1, a6 >> 1)
+    def decode(self, data):
+        res = []
+        for char in data[:6]:
+            res.append(chr(ord(char)>>1))
+        addr = "".join(res)
+        
+        last = ord(data[6])
+        #hrr = last >> 5
+        ssid = (last >> 1) & 0xf
+        ext = last & 0x1
+        
         if ssid != 0:
-            call = "{}-{}".format(addr.strip(), ssid)
-            self.ssid = ssid
+            call = "%s-%d" % (addr.strip(), ssid)
         else:
             call = addr
-        return (call, hrr, ext)
+        return (call, ssid, ext)
 
-    def decode(self, frame):
-        pos = 0
-        what_is_this = struct.unpack("<B", frame[pos])
-        pos += 1
-
-        # DST
-        (dest_addr, dest_hrr, dest_ext) = self.decode_addr(frame, pos)
-        pos += 7
+    def decodeAx25(self, frame):
+        # destination address
+        (dest_addr, dest_ssid, dest_ext) = self.decode(frame[1:8])
         self.dst = dest_addr
         
-        # SRC
-        (src_addr, src_hrr, src_ext) = self.decode_addr(frame, pos)  
-        pos += 7
+        # source address
+        (src_addr, src_ssid, src_ext) = self.decode(frame[8:15])
         self.src = src_addr
+        self.ssid = src_ssid
         
-        # REPEATERS
+        # repeaters
+        frame = frame[15:]
         self.rpt = []
         ext = src_ext
         while ext == 0:
-            rpt_addr, rpt_hrr, ext = self.decode_addr(frame, pos)
+            rpt_addr, rpt_ssid, ext = self.decode(frame[:7])
             self.rpt.append(rpt_addr)
-            pos += 7
+            frame = frame[7:]
 
-        # CTRL
-        (ctrl,) = struct.unpack("<B", frame[pos])
-        pos += 1
+        # control
+        ctrl = ord(frame[0])
       
         if (ctrl & 0x3) == 0x3:
-            pos += 1
-            self.info = frame[pos:] # U frame
+            self.info = frame[2:] # U frame
         elif (ctrl & 0x3) == 0x1:
             pass # S frame
         elif (ctrl & 0x1) == 0x0:
             pass # I frame
+

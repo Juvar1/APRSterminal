@@ -4,19 +4,19 @@
 	
 	<title>text</title>
 
-	<meta charset="utf-8" />
-
+	<meta charset="utf-8">
     <style>
 
     body {
-        padding: 0 10px;
+        padding: 0;
         margin: 0;
-        background-color: #888888;
+        background-color: #73b6e6;
         font-size: 12px;
     }
-    img {
+    /*img {
+        display: inline;
         position: absolute;
-        margin: 0 0 0 15px;
+        margin: 0 15px;
         border:0; 
         width:19px; 
         height:20px;
@@ -24,30 +24,65 @@
     ul {
         list-style-type: none;
         margin: 0 0 0 0;
+    }*/
+    .ownMsg {
+        float:right!important;
     }
-    p {
-        color:rgb(240,240,0);
+    div.msg {
+        float:left;
+        clear:both;
+        margin: 8px 10px;
+        background-color: #d6dbb6;
+        border-radius: 10px;
+        box-shadow: 0px 1px 2px #292929;
+        width: 80%;
     }
-    li {
+    .header {
+        display:block;
+        height: 18px;
+        clear:both;
+        overflow:hidden;
+        border-radius: 10px 10px 0 0;
+        background-color: #eeffff;
+    }
+    .footer {
+        display:block;
+        height: 18px;
+        clear:both;
+        overflow:hidden;
+        border-radius: 0 0 10px 10px;
+        background-color: #eeffff;
+    }
+    .Right {
+        float:right;
+        padding:0;margin:0 10px;
+        color: #6a737c
+    }
+    .Left {
+        float:left;
+        padding:0;margin:0 10px;
+        color: #6a737c
+    }
+    .middle {
+        margin: 5px;
+        padding:0;
+    }
+    /*li {
         color:rgb(240,240,0);
     }
     span {
-        color:rgb(240,240,240);
-    }
+        color: #6a737c;
+    }*/
 
     </style>
-
  	
 </head>
 <body>
 
-
-
 <div id="text"></div>
 <script>
 
-    function addText(str) {
-        //json1 = JSON.parse(str1)
+    function addText(str,own) {
         // choose symbol table
         if (str.symb[0] == "\\") {
             table="alternate.png";
@@ -77,27 +112,57 @@
         }
 
         // append data
-        var newNode = document.createElement("p");
-        newNode.innerText = str.time;
+        var newNode = document.createElement("div");
+        //newNode.innerText = str.info[1];
 
         var icon = document.createElement("img");
         icon.setAttribute("src","blank.png");
         icon.setAttribute("style","background:url('"+table+"') -"+x+"px -"+y+"px;");
 
-        var list = document.createElement("ul");
+        var header = document.createElement("div");
+        header.setAttribute("class", "header");
+        var headerLeft = document.createElement("p");
+        headerLeft.setAttribute("class", "Left");
+        headerLeft.innerText = str.src;
+        //headerLeft.appendChild(icon);
+        header.appendChild(headerLeft);
+        var headerRight = document.createElement("p");
+        headerRight.setAttribute("class", "Right");
 
-        list.appendChild(addItem("Source: ",str.src));
-        list.appendChild(addItem("Destination: ",str.dst));
-        list.appendChild(addItem("Repeaters: ",str.rpt));
-        list.appendChild(addItem(str.info[0]+": ",str.info[1]));
+        headerRight.innerText = str.time;
+        header.appendChild(headerRight);
 
+        var middle = document.createElement("p");
+        middle.setAttribute("class", "middle");
+        middle.innerText = str.info[1];
+
+        var footer = document.createElement("div");
+        footer.setAttribute("class", "footer");
+        var footerLeft = document.createElement("p");
+        footerLeft.setAttribute("class", "Left");
+        footerLeft.innerText = "Destination: "+str.dst;
+        footer.appendChild(footerLeft);
+        var footerRight = document.createElement("p");
+        footerRight.setAttribute("class", "Right");
+        footerRight.innerText = "Path: "+str.rpt;
+        footer.appendChild(footerRight);
+        //var list = document.createElement("ul");
+        //list.appendChild(addItem("Source: ",str.src));
+        //list.appendChild(addItem("Destination: ",str.dst));
+        //list.appendChild(addItem("Repeaters: ",str.rpt));
+        //list.appendChild(addItem(str.info[0]+": ",str.info[1]));
 
         id = Math.floor(Math.random() * 100000);
         newNode.setAttribute("id", id);
+        newNode.setAttribute("class", "msg");
+        if(own) {newNode.setAttribute("class", "msg ownMsg");}
 
         text = document.getElementById("text");
-        newNode.appendChild(icon);
-        newNode.appendChild(list);
+        newNode.appendChild(header);
+        newNode.appendChild(middle);
+        newNode.appendChild(footer);
+        //newNode.appendChild(icon);
+        //newNode.appendChild(list);
         text.appendChild(newNode);
         
         // auto-scroll-down
@@ -114,8 +179,6 @@
     }
 
 </script>
-
-
 
 </body>
 </html>
