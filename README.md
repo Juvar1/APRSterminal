@@ -1,7 +1,7 @@
 APRS Terminal
 =============
 
-A simple Python GUI program to view APRS data from radio via serial port or Bluetooth. Serial port and Bluetooth settings is available in settings panel. Autoscrolling feature is included to program so latest messages are always visible.
+A simple Python GUI program to view APRS data from radio via serial port or Bluetooth. Easy to send messages and update status. Serial port and Bluetooth settings is available in settings panel. Autoscrolling feature is included to program so latest messages are always visible.
 
 ### Features
 - Graphical user interface for those who not like text only mode.
@@ -15,7 +15,7 @@ A simple Python GUI program to view APRS data from radio via serial port or Blue
 ![Screenshot](screenshot/program2.png)
 
 ### Supported and tested Hardware
-- Supports virtually any TNC which supports real or virtual serial port and KISS protocol.
+- Supports any TNC which supports real or virtual serial port and KISS protocol.
 - Tested with [Mobilinkd TNC2](https://store.mobilinkd.com/) through Bluetooth (with virtual serial port).
 
 ### How does it work
