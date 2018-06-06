@@ -1,7 +1,7 @@
 #! /usr/bin/python
 # -*- coding: utf-8 -*-
 
-#    APRS terminal, ver 2.2
+#    APRS terminal, ver 2.3
 
 #    Copyright (C) 2018 Juvar, Juha-Pekka Varjonen, OH1FWW
 
@@ -96,7 +96,7 @@ class Main(QtGui.QMainWindow):
         self.splitter.addWidget(self.text)
 
         # disable context menus
-        #self.html.setContextMenuPolicy(0)
+        self.html.setContextMenuPolicy(0)
         self.text.setContextMenuPolicy(0)
 
         # x and y coordinates on the screen, width, height
@@ -553,112 +553,106 @@ class Main(QtGui.QMainWindow):
                         self.msg = True
                         break
 
-                    self.node = {}
-                    self.node["time"] = datetime.now().strftime("%d %b, %H:%M")
-                    self.node["src"] = data.src
-                    self.node["dst"] = data.dst
-                    self.node["rpt"] = data.rpt
+                    node = {}
+                    node["time"] = datetime.now().strftime("%d %b, %H:%M")
+                    node["src"] = data.src
+                    node["id"] = node["src"]
+                    node["dst"] = data.dst
+                    node["rpt"] = data.rpt
                     test = re.search(r"^(.).*(\d{4}\.\d\d[NS])(.)(\d{5}\.\d\d[EW])(.).*",data.info)
                     #Mic-E format
                     if (data.info[0] == "'" or data.info[0] == "`"):
-                        self.node["id"] = self.node["src"]
                         decode = mice.Mice(data.dst,data.info)
-                        self.node["symb"] = decode.symbol
-                        self.node["lat"] = decode.lat.zfill(8)
-                        self.node["lon"] = decode.lon.zfill(9)
+                        node["symb"] = decode.symbol
+                        node["lat"] = decode.lat.zfill(8)
+                        node["lon"] = decode.lon.zfill(9)
                         content = "lat: %s, lon: %s, speed: %ikm/h, course: %i, alt: %im, status: %s, info: %s" % (decode.lat.zfill(8), decode.lon.zfill(9), decode.speed, decode.crs, decode.alt, decode.status, decode.info)
-                        self.node["info"] = ["Mic-E",content]
+                        node["info"] = ["Mic-E",content]
                     #other than Mic-E
                     elif test:
-                        self.node["symb"] = test.group(3)+test.group(5)
-                        self.node["lat"] = test.group(2)
-                        self.node["lon"] = test.group(4)
+                        node["symb"] = test.group(3)+test.group(5)
+                        node["lat"] = test.group(2)
+                        node["lon"] = test.group(4)
 
-                        self.node["id"] = self.node["src"]
-                        for key in self.nodes:
-                            oldlat = self.nodes[key]["lat"]
-                            oldlon = self.nodes[key]["lon"]
-                            if (key == self.node["src"]):
-                                if ((self.node["lat"] != oldlat) or (self.node["lon"] != oldlon)):
-                                    self.node["id"] = self.node["src"] + datetime.now().strftime("%H%M%S%f")
                         if (data.info[0] == ";"):
+                            node["id"] = data.info[1:10].rstrip()
                             if (test.group(5) == "_"):
                                 # weather report format
                                 gust,temp,rain1h,rain24h,rainsm,humi,pres = self.decodeWeather(data.info)
-                                self.node["info"] = ["Weather report",("name: %s, time: %s, lat: %s, lon: %s, wind: %sdeg. %im/s, gusts: %sm/s, temp: %sC, rain 1h: %smm, rain 24h: %smm, rain since midnight: %smm, humidity: %s%%, pressure: %smbar" % (data.info[1:10].rstrip(),self.formatTime(data.info[11:18]),test.group(2),test.group(4),data.info[37:40],(float(data.info[41:44])*0.447),gust,temp,rain1h,rain24h,rainsm,humi,pres))]
+                                node["info"] = ["Weather report",("name: %s, time: %s, lat: %s, lon: %s, wind: %sdeg. %im/s, gusts: %sm/s, temp: %sC, rain 1h: %smm, rain 24h: %smm, rain since midnight: %smm, humidity: %s%%, pressure: %smbar" % (data.info[1:10].rstrip(),self.formatTime(data.info[11:18]),test.group(2),test.group(4),data.info[37:40],(float(data.info[41:44])*0.447),gust,temp,rain1h,rain24h,rainsm,humi,pres))]
                             else:
                                 # other objects
-                                self.node["info"] = ["Object",("name: %s, time: %s, lat: %s, lon: %s, info: %s" % (data.info[1:10].rstrip(),self.formatTime(data.info[11:18]),test.group(2),test.group(4),data.info))]
+                                node["info"] = ["Object",("name: %s, time: %s, lat: %s, lon: %s, info: %s" % (data.info[1:10].rstrip(),self.formatTime(data.info[11:18]),test.group(2),test.group(4),data.info))]
                         elif (data.info[0] == "!" or data.info[0] == "="):
                             if (test.group(5) == "_"):
                                 # weather report format
                                 gust,temp,rain1h,rain24h,rainsm,humi,pres = self.decodeWeather(data.info)
-                                self.node["info"] = ["Weather report",("lat: %s, lon: %s, wind: %sdeg. %im/s, gusts: %sm/s, temp: %sC, rain 1h: %smm, rain 24h: %smm, rain since midnight: %smm, humidity: %s%%, pressure: %smbar" % (test.group(2),test.group(4),data.info[20:23],(float(data.info[24:27])*0.447),gust,temp,rain1h,rain24h,rainsm,humi,pres))]
+                                node["info"] = ["Weather report",("lat: %s, lon: %s, wind: %sdeg. %im/s, gusts: %sm/s, temp: %sC, rain 1h: %smm, rain 24h: %smm, rain since midnight: %smm, humidity: %s%%, pressure: %smbar" % (test.group(2),test.group(4),data.info[20:23],(float(data.info[24:27])*0.447),gust,temp,rain1h,rain24h,rainsm,humi,pres))]
                             else:
                                 # other objects
-                                self.node["info"] = ["Position","lat: %s, lon: %s, info: %s" % (test.group(2),test.group(4),data.info[20:])]
+                                node["info"] = ["Position","lat: %s, lon: %s, info: %s" % (test.group(2),test.group(4),data.info[20:])]
                         elif (data.info[0] == "#" or data.info[0] == "*"):
-                            self.node["info"] = ["Peet Bros U-II Weather Station",data.info]
+                            node["info"] = ["Peet Bros U-II Weather Station",data.info]
                         elif (data.info[0] == "$"):
-                            self.node["info"] = ["Raw GPS data or Ultimeter 2000",data.info]
+                            node["info"] = ["Raw GPS data or Ultimeter 2000",data.info]
                         elif (data.info[0] == "\%"):
-                            self.node["info"] = ["Agrelo DFJr / MicroFinder",data.info]
+                            node["info"] = ["Agrelo DFJr / MicroFinder",data.info]
                         elif (data.info[0] == ")"):
-                            self.node["info"] = ["Item",data.info]
+                            node["info"] = ["Item",data.info]
                         elif (data.info[0] == ","):
-                            self.node["info"] = ["Invalid or test data",data.info]
+                            node["info"] = ["Invalid or test data",data.info]
                         elif (data.info[0] == "/" or data.info[0] == "@"):
-                            self.node["info"] = ["Position","time: %s, lat: %s, lon: %s, info: %s" % (self.formatTime(data.info[1:8]),test.group(2),test.group(4),data.info)]
+                            node["info"] = ["Position","time: %s, lat: %s, lon: %s, info: %s" % (self.formatTime(data.info[1:8]),test.group(2),test.group(4),data.info)]
                         elif (data.info[0] == r"<"):
-                            self.node["info"] = ["Station capabilities",data.info]
+                            node["info"] = ["Station capabilities",data.info]
                         elif (data.info[0] == "?"):
-                            self.node["info"] = ["Query",data.info]
+                            node["info"] = ["Query",data.info]
                         elif (data.info[0] == "_"):
-                            self.node["info"] = ["Weather report",data.info]
+                            node["info"] = ["Weather report",data.info]
                         elif (data.info[0] == "{"):
-                            self.node["info"] = ["User-defined format",data.info]
+                            node["info"] = ["User-defined format",data.info]
                         elif (data.info[0] == "}"):
-                            self.node["info"] = ["Third-party format",data.info]
+                            node["info"] = ["Third-party format",data.info]
                         else:
-                            self.node["info"] = ["Unknown format",data.info]
+                            node["info"] = ["Unknown format",data.info]
                     else: # compressed/other formats
-                        self.node["lat"] = "0000.00N"
-                        self.node["lon"] = "00000.00E"
-                        self.node["id"] = self.node["src"] + datetime.now().strftime("%H%M%S%f")
+                        node["lat"] = "0000.00N"
+                        node["lon"] = "00000.00W"
                         if (data.info[0] == ";"):
-                            self.node["symb"] = data.info[18]+data.info[27]
+                            node["id"] = data.info[1:10].rstrip()
+                            node["symb"] = data.info[18]+data.info[27]
                             lat,lon = self.base91(data.info[19:23],data.info[23:27])
-                            self.node["lat"] = lat
-                            self.node["lon"] = lon
-                            self.node["info"] = ["Object","name: %s, time: %s, lat: %s, lon: %s, info: %s" % (data.info[1:10].rstrip(),self.formatTime(data.info[11:18]),lat,lon,data.info)]
+                            node["lat"] = lat
+                            node["lon"] = lon
+                            node["info"] = ["Object","name: %s, time: %s, lat: %s, lon: %s, info: %s" % (data.info[1:10].rstrip(),self.formatTime(data.info[11:18]),lat,lon,data.info)]
                         elif (data.info[0] == "!" or data.info[0] == "="):
-                            self.node["symb"] = data.info[1]+data.info[10]
+                            node["symb"] = data.info[1]+data.info[10]
                             lat,lon = self.base91(data.info[2:6],data.info[6:10])
-                            self.node["lat"] = lat
-                            self.node["lon"] = lon
-                            self.node["info"] = ["Position","lat: %s, lon: %s, info: %s" % (lat,lon,data.info)]
+                            node["lat"] = lat
+                            node["lon"] = lon
+                            node["info"] = ["Position","lat: %s, lon: %s, info: %s" % (lat,lon,data.info)]
                         elif (data.info[0] == "/" or data.info[0] == "@"):
-                            self.node["symb"] = data.info[8]+data.info[17]
+                            node["symb"] = data.info[8]+data.info[17]
                             lat,lon = self.base91(data.info[9:13],data.info[13:17])
-                            self.node["lat"] = lat
-                            self.node["lon"] = lon
-                            self.node["info"] = ["Position","time: %s, lat: %s lon: %s info: %s" % (self.formatTime(data.info[1:8]),lat,lon,data.info)]
+                            node["lat"] = lat
+                            node["lon"] = lon
+                            node["info"] = ["Position","time: %s, lat: %s lon: %s info: %s" % (self.formatTime(data.info[1:8]),lat,lon,data.info)]
                         elif (data.info[0] == r">"): # status report
-                            self.node["symb"] = "/0"
+                            node["symb"] = "\\."
                             timeFound = re.match(r"\d{6}[z]",data.info)
-                            if(timeFound): self.node["info"] = ["Status","time: %s, status: %s" % (self.formatTime(data.info[1:8]),data.info[8:])]
-                            else: self.node["info"] = ["Status", data.info[1:]]
+                            if(timeFound): node["info"] = ["Status","time: %s, status: %s" % (self.formatTime(data.info[1:8]),data.info[8:])]
+                            else: node["info"] = ["Status", data.info[1:]]
                         elif (data.info[0] == ":"): # message
-                            self.node["symb"] = "/0"
-                            self.node["info"] = ["Message", "adressee: %s, message: %s" % (data.info[1:10].rstrip(),data.info[11:])]
-                        elif (data.info[0] == "T"):
-                            self.node["symb"] = "/0"
-                            self.node["info"] = ["Telemetry",data.info]
+                            node["symb"] = "\\."
+                            node["info"] = ["Message", "adressee: %s, message: %s" % (data.info[1:10].rstrip(),data.info[11:])]
+                        elif (data.info[0] == "T"): # telemetry
+                            node["symb"] = "\\."
+                            node["info"] = ["Telemetry",data.info]
                         else:
-                            self.node["symb"] = "/0"
-                            self.node["info"] = ["Unknown format",data.info]
+                            node["symb"] = "\\."
+                            node["info"] = ["Unknown format",data.info]
                     #self.addToMap()
-                    self.addText(own)
+                    self.addTo(node,own)
                     self.aprsResult = ""
             elif (self.msg == True):
                 self.aprsResult += value
@@ -688,7 +682,7 @@ class Main(QtGui.QMainWindow):
         return gust,temp,rain1h,rain24h,rainsm,humi,pres
 
     def ddToGPS(self,dec):
-        #decimal decrees to GPS coordinates
+        #decimal degrees to degrees and minutes
         degrees = int(dec)
         minutes = 60.0*(dec-degrees)
         return "%s%.2f" % (degrees,minutes)
@@ -708,12 +702,12 @@ class Main(QtGui.QMainWindow):
         if(tme[-1] == "/"): return "%s' day %s:%s Local" % (tme[0:2],tme[2:4],tme[4:6])
         if(tme[-1] == "h"): return "%s:%s.%s UTC" % (tme[0:2],tme[2:4],tme[4:6])
 
-    def addText(self,own=False):
+    def addTo(self,node,own=False):
 
-        self.node["time"] = self.node["time"].decode("utf-8").encode("latin-1")
+        node["time"] = node["time"].decode("utf-8").encode("latin-1")
 
         frame = self.text.page().mainFrame()
-        frame.evaluateJavaScript("addText(%s,%d);" % (self.node,own))
+        frame.evaluateJavaScript("addText(%s,%d);" % (node,own))
 
     #def addToMap(self):
         # add into JSON list
@@ -739,7 +733,7 @@ class Main(QtGui.QMainWindow):
             if (diff.seconds > 1800): #30 minutes
                 del self.nodes[key]
 
-        self.nodes[self.node["id"]] = self.node
+        self.nodes[node["id"]] = node
 
         # add to map
         frame1 = self.html.page().mainFrame()
