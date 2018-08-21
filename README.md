@@ -22,5 +22,4 @@ A simple Python GUI program to view APRS data from radio via serial port or Blue
 Program decodes KISS frame and then ax.25 frame and lastly MIC-E data if available. Result is printed on window with colorful notation.
 
 ### HELP - What to do if it does not work somehow?
-Program should work on Python version 2.7.xx and onward. Run it with command "sudo python APRSterminal.py" without quotes.
-Contact me. I'm willing to help on any questions and can even add some features to program if necessary.
+Program should work on Python version 2.7.xx and onward. Run it with command "sudo python APRSterminal.py" without quotes. With Python3.6 run with command "python3.6 APRSterminalP3.py". Contact me. I'm willing to help on any questions and can even add some features to program if necessary.
