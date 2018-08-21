@@ -22,6 +22,16 @@
         background-color: rgba(0,0,0,0);
         border: 0;
     }
+    .leaflet-popup-content {
+        margin: 0;
+    }
+    .source {
+        margin: 1px 19px 1px 10px;
+        border-bottom: dashed 1px #888888;
+    }
+    .text {
+        margin: 0 10px;
+    }
 
     </style>
 
@@ -50,9 +60,11 @@
     function makeNodeList(rawNodes) {
         group1.clearLayers();
 
-        //for (var i = 0; i < rawNodes.length; i++) {
         for (var key in rawNodes) {
-            group1.addLayer(addNode(rawNodes[key]));
+            var ret = addNode(rawNodes[key])
+            if(ret != null) { // bugfix: remove error message
+                group1.addLayer(ret);
+            }
         }
 
         group1.addTo(mymap);
@@ -104,9 +116,21 @@
             popupAnchor: [0, -10]
         });
 
+        // take status text if defined
+        stat = "";
+        if ("status" in str) {
+            stat = "<br>Status: <b>"+str["status"]+"</b>";
+        }
+
+        // take message part
+        msg = "";
+        if ("message" in str) {
+            msg = "<br>Message: <b>"+str["message"]+"</b>";
+        }
+
         // make new node
-        var node = L.marker([newLat, newLon],{icon: myIcon}); //.addTo(mymap).bindPopup(str.src);
-        node.bindPopup(str.src);
+        var node = L.marker([newLat, newLon],{icon: myIcon});
+        node.bindPopup("<div class='source'>"+str.id+" (from "+str.src+")</div>"+"<div class='text'>"+str.time+stat+msg+"<br><i>"+str.info[1]+"</i><br>("+str.rpt+")</div>");
 
         // if first time here, then zoom to first node
         if (firstTime) {
